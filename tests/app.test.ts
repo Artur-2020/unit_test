@@ -20,7 +20,7 @@ describe('App', () => {
   });
 
   it('starts the server', async () => {
-    const response = await request(app.app).get('/');
+    const response = await request(app.app).get('/api/');
     expect(response.status).toBe(200);
     expect(response.text).toBe('Hello, Express with TypeScript!');
   });

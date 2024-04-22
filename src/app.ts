@@ -1,6 +1,8 @@
 import express, { Request, Response, Application, NextFunction } from 'express';
 import { Server } from 'http';
 import Router from './routes'
+import MongoDBLoader from "./db";
+import * as bodyParser from "body-parser";
 
 export default class App {
   private readonly port: number;
@@ -20,6 +22,7 @@ export default class App {
    * @return {void} no return value
    */
   private configureMiddleware(): void {
+    this.app.use(bodyParser.json());
     // Add middleware for error handling
     this.app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
      if (err) {
@@ -42,15 +45,15 @@ export default class App {
    * Method for starting the server.
    */
 
-  public async start(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+  public async start(): Promise<string> {
+    return new Promise<string>(async (resolve, reject) => {
       try {
+        await MongoDBLoader.connect();
         this.server = this.app.listen(this.port, (err?: Error) => {
           if (err) {
             reject(err);
           }
-          console.log(`Server is running on port ${this.port}`);
-          resolve();
+          resolve(`Server is running on port ${this.port}`);
         });
       } catch (error) {
         reject(error);
@@ -62,13 +65,14 @@ export default class App {
    * Method for stopping the server.
    */
   public async stop(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>( (resolve, reject) => {
       try {
         if (this.server) {
-          this.server.close((err) => {
+          this.server.close(async (err) => {
             if (err) {
               reject(err);
             }
+            await MongoDBLoader.disconnect();
             console.log('Server stopped');
             resolve();
           });
